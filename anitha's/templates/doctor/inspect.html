@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}Inspect Case – {{ analysis.report_id }} – MediLens AI Doctor Portal{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 24px;">
+    <!-- Top Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+        <div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">
+                <a href="{{ url_for('doctor.dashboard') }}"><i class="fas fa-arrow-left"></i> Back to Clinical Queue</a>
+            </div>
+            <h1 style="font-size: 1.85rem; color: var(--primary-navy);">
+                Clinical Inspection: <span style="color: var(--secondary-teal);">{{ analysis.report_id }}</span>
+            </h1>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ url_for('doctor.download_pdf', report_id=analysis.report_id) }}" class="btn btn-outline" style="background: #fff;">
+                <i class="fas fa-file-pdf" style="color: #DC2626;"></i> Export Clinical PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Patient Context & Chief Complaint Banner -->
+    <div class="card card-light-blue" style="margin-bottom: 24px; padding: 20px 24px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: center;">
+            <div>
+                <span style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Patient Name</span>
+                <div style="font-size: 1.15rem; font-weight: 800; color: var(--primary-navy);">{{ analysis.patient_name }}</div>
+            </div>
+            <div>
+                <span style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Age & Gender</span>
+                <div style="font-size: 1rem; font-weight: 600; color: var(--text-primary);">{{ share.patient_age }} Yrs / {{ share.patient_gender }}</div>
+            </div>
+            <div>
+                <span style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Contact Phone</span>
+                <div style="font-size: 1rem; font-weight: 600; color: var(--text-primary);">{{ share.patient_phone or 'Not provided' }}</div>
+            </div>
+            <div>
+                <span style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Shared Timestamp</span>
+                <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">{{ share.shared_at|datetime_format }}</div>
+            </div>
+        </div>
+
+        {% if share.patient_notes %}
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--card-light-blue-border); font-size: 0.9rem; color: var(--text-secondary);">
+            <strong style="color: var(--primary-navy);"><i class="fas fa-notes-medical"></i> Patient's Stated Symptoms:</strong>
+            <span style="font-style: italic;">"{{ share.patient_notes }}"</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Main Workspace Grid -->
+    <div style="display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 28px; margin-bottom: 32px;">
+        
+        <!-- Left: Image Viewer & XAI Rollout Overlay -->
+        <div class="card" style="padding: 24px;">
+            <div class="card-header" style="margin-bottom: 16px;">
+                <div class="card-title" style="font-size: 1.1rem;">
+                    <i class="fas fa-eye" style="color: var(--secondary-teal);"></i> Radiographic & Attention Rollout Fusion
+                </div>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Adjust slider to inspect parenchymal opacities</span>
+            </div>
+
+            <div class="viewer-container">
+                <img src="{{ url_for('static', filename=analysis.original_image_path) }}" alt="Base Radiograph" class="viewer-base-img">
+                <img src="{{ url_for('static', filename=analysis.heatmap_path) }}" alt="XAI Heatmap" class="viewer-overlay-img" id="interactiveOverlayImg" style="opacity: 0.52;">
+            </div>
+
+            <!-- Heatmap Opacity Control -->
+            <div style="margin-top: 18px; background: #F8FAFC; padding: 14px 18px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label for="heatmapOpacitySlider" style="font-weight: 600; font-size: 0.88rem; color: var(--primary-navy); display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-adjust" style="color: var(--secondary-teal);"></i> Attention Rollout Opacity:
+                    </label>
+                    <span id="opacityValueLabel" style="font-weight: 700; color: var(--secondary-teal); font-size: 0.92rem;">52%</span>
+                </div>
+                <input type="range" id="heatmapOpacitySlider" min="0" max="100" value="52" class="slider-ctrl">
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                    <span>0% (Raw Radiograph)</span>
+                    <span>50% (Fused Overlay)</span>
+                    <span>100% (Attention Only)</span>
+                </div>
+            </div>
+
+            <!-- AI Findings Summary -->
+            <div style="margin-top: 20px; background: #F1F5F9; padding: 14px; border-radius: 8px; border: 1px solid var(--border-subtle); font-size: 0.88rem;">
+                <div style="font-weight: 700; color: var(--primary-navy); margin-bottom: 4px;">
+                    <i class="fas fa-brain" style="color: var(--secondary-teal);"></i> ViT Model Findings:
+                </div>
+                <p style="color: var(--text-secondary); line-height: 1.5;">
+                    {{ analysis.findings_summary }}
+                </p>
+                <div style="margin-top: 8px; font-weight: 600; color: var(--text-primary);">
+                    Active Attention Focus: {{ analysis.affected_regions }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Doctor Clinical Verification Form -->
+        <div class="card" style="padding: 24px;">
+            <div class="card-header" style="margin-bottom: 16px;">
+                <div class="card-title" style="font-size: 1.15rem;">
+                    <i class="fas fa-user-md" style="color: var(--secondary-teal);"></i> Doctor Clinical Review Form
+                </div>
+            </div>
+
+            <!-- AI Classification Box -->
+            <div style="margin-bottom: 20px; padding: 14px; border-radius: 8px; {% if analysis.predicted_class == 'Pneumonia' %}background: #FEF2F2; border: 1px solid #FECACA;{% else %}background: #F0FDF4; border: 1px solid #BBF7D0;{% endif %}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; {% if analysis.predicted_class == 'Pneumonia' %}color: #B91C1C;{% else %}color: #15803D;{% endif %}">
+                            AI Model Diagnostic Prediction
+                        </div>
+                        <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary-navy);">
+                            {{ analysis.predicted_class }}
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 1.5rem; font-weight: 800; color: var(--primary-navy);">{{ analysis.confidence }}%</span>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">Confidence</div>
+                    </div>
+                </div>
+            </div>
+
+            <form action="{{ url_for('doctor.submit_review', report_id=analysis.report_id) }}" method="POST">
+                <div class="form-group">
+                    <label class="form-label" for="verdict"><i class="fas fa-clipboard-check"></i> Clinical Diagnostic Verdict</label>
+                    <select name="verdict" id="verdict" class="form-control" required>
+                        <option value="">-- Select Physician Verdict --</option>
+                        <option value="Confirmed Community-Acquired Pneumonia" {% if existing_review and 'Pneumonia' in existing_review.clinical_verdict %}selected{% endif %}>
+                            Confirmed Community-Acquired Pneumonia
+                        </option>
+                        <option value="Confirmed Normal (No Acute Pulmonary Infiltration)" {% if existing_review and 'Normal' in existing_review.clinical_verdict %}selected{% endif %}>
+                            Confirmed Normal (No Acute Pulmonary Infiltration)
+                        </option>
+                        <option value="Inconclusive / Recommend Chest High-Resolution CT" {% if existing_review and 'Inconclusive' in existing_review.clinical_verdict %}selected{% endif %}>
+                            Inconclusive / Recommend Chest High-Resolution CT
+                        </option>
+                        <option value="Discordant with AI / Non-Pneumonic Pulmonary Etiology" {% if existing_review and 'Discordant' in existing_review.clinical_verdict %}selected{% endif %}>
+                            Discordant with AI / Non-Pneumonic Pulmonary Etiology
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="notes"><i class="fas fa-stethoscope"></i> Attending Physician Clinical Notes</label>
+                    <textarea name="notes" id="notes" rows="4" class="form-control" placeholder="Enter clinical radiologic evaluation, bilateral parenchymal inspection notes, and differential diagnosis..." required>{{ existing_review.clinical_notes if existing_review else '' }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="recommendations"><i class="fas fa-prescription-bottle-alt"></i> Treatment Plan & Recommendations</label>
+                    <textarea name="recommendations" id="recommendations" rows="3" class="form-control" placeholder="Prescribed medication, follow-up radiograph interval, oxygenation monitoring...">{{ existing_review.recommendations if existing_review else '' }}</textarea>
+                </div>
+
+                <div style="margin-top: 24px;">
+                    <button type="submit" class="btn btn-teal" style="width: 100%; padding: 12px; font-size: 1rem;">
+                        <i class="fas fa-check-circle"></i> {% if existing_review %}Update Clinical Review{% else %}Submit Review & Sign Off{% endif %}
+                    </button>
+                </div>
+            </form>
+
+            {% if existing_review %}
+            <div style="margin-top: 16px; padding: 10px; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 6px; font-size: 0.82rem; color: #065F46; text-align: center;">
+                <i class="fas fa-info-circle"></i> Last signed off on {{ existing_review.reviewed_at|datetime_format }}. Submitting again will update the record.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

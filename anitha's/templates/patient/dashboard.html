@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block title %}Patient Dashboard – MediLens AI{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Dashboard Top Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <h1 style="font-size: 1.85rem; margin-bottom: 4px;">Patient Diagnostic Portal</h1>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">
+                Welcome, <strong>{{ current_user.name }}</strong>. Review your pulmonary image analyses and explainable AI insights.
+            </p>
+        </div>
+        <div>
+            <a href="{{ url_for('patient.upload_page') }}" class="btn btn-teal">
+                <i class="fas fa-cloud-upload-alt"></i> New Chest X-Ray Analysis
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Overview Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 32px;">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-navy">
+                <i class="fas fa-x-ray"></i>
+            </div>
+            <div>
+                <div class="stat-val">{{ total_analyses }}</div>
+                <div class="stat-label">Total X-Ray Analyses</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-teal">
+                <i class="fas fa-share-alt"></i>
+            </div>
+            <div>
+                <div class="stat-val">{{ total_shared }}</div>
+                <div class="stat-label">Shared with Doctors</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-blue">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <div>
+                <div class="stat-val">{{ total_reviewed }}</div>
+                <div class="stat-label">Doctor Reviews Completed</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-red">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div>
+                <div class="stat-val">{{ notifications|length }}</div>
+                <div class="stat-label">System Notifications</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Section -->
+    {% if notifications %}
+    <div class="card card-light-blue" style="margin-bottom: 32px;">
+        <div class="card-header" style="margin-bottom: 14px;">
+            <div class="card-title" style="font-size: 1.05rem;">
+                <i class="fas fa-bell" style="color: var(--secondary-teal);"></i> Recent Clinical Updates & Notifications
+            </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            {% for n in notifications %}
+            <div style="background: #fff; border: 1px solid var(--card-light-blue-border); border-radius: var(--radius-md); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="color: #059669; font-size: 1.1rem;"><i class="fas fa-check-circle"></i></div>
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.92rem; color: var(--primary-navy);">{{ n.title }}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">{{ n.message }}</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 0.78rem; color: var(--text-muted);"><i class="far fa-clock"></i> {{ n.time }}</span>
+                    {% if n.report_id %}
+                    <a href="{{ url_for('patient.results_page', report_id=n.report_id) }}" class="btn btn-outline btn-sm">
+                        View Report
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Analyses Card & Table -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-history" style="color: var(--secondary-teal);"></i> Recent X-Ray Diagnostic Analyses
+            </div>
+            <a href="{{ url_for('patient.history_page') }}" class="btn btn-outline btn-sm">
+                View All Scans ({{ total_analyses }})
+            </a>
+        </div>
+
+        {% if recent_analyses %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Scan Thumbnail</th>
+                        <th>Report ID</th>
+                        <th>Date & Time</th>
+                        <th>AI Predicted Class</th>
+                        <th>ViT Confidence</th>
+                        <th>Doctor Review Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in recent_analyses %}
+                    <tr>
+                        <td>
+                            <img src="{{ url_for('static', filename=a.original_image_path) }}" alt="Thumbnail" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-subtle);">
+                        </td>
+                        <td>
+                            <strong style="color: var(--primary-navy);">{{ a.report_id }}</strong>
+                        </td>
+                        <td style="color: var(--text-secondary); font-size: 0.88rem;">
+                            {{ a.created_at|datetime_format }}
+                        </td>
+                        <td>
+                            {% if a.predicted_class == 'Pneumonia' %}
+                            <span class="badge-role" style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5;">
+                                <i class="fas fa-exclamation-triangle"></i> Pneumonia
+                            </span>
+                            {% else %}
+                            <span class="badge-role" style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0;">
+                                <i class="fas fa-check-circle"></i> Normal
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="flex: 1; min-width: 60px; height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden;">
+                                    <div style="width: {{ a.confidence }}%; height: 100%; background: {% if a.predicted_class == 'Pneumonia' %}#EF4444{% else %}#10B981{% endif %};"></div>
+                                </div>
+                                <span style="font-weight: 700; font-size: 0.85rem;">{{ a.confidence }}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if a.doc_status == 'Reviewed' %}
+                            <span class="badge-role" style="background: #E0F2FE; color: #0284C7; border: 1px solid #BAE6FD;" title="Reviewed by {{ a.doctor_name }}">
+                                <i class="fas fa-user-md"></i> Verified by {{ a.doctor_name }}
+                            </span>
+                            {% elif a.share_status == 'Pending Review' %}
+                            <span class="badge-role" style="background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A;">
+                                <i class="fas fa-hourglass-half"></i> Shared (Pending Review)
+                            </span>
+                            {% else %}
+                            <span class="badge-role" style="background: #F1F5F9; color: #64748B;">
+                                Not Shared
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 6px;">
+                                <a href="{{ url_for('patient.results_page', report_id=a.report_id) }}" class="btn btn-outline btn-sm" title="Inspect Diagnosis & Heatmap">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <a href="{{ url_for('patient.download_pdf', report_id=a.report_id) }}" class="btn btn-outline btn-sm" title="Download Official PDF Report">
+                                    <i class="fas fa-file-pdf" style="color: #DC2626;"></i> PDF
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 48px 20px; color: var(--text-muted);">
+            <i class="fas fa-x-ray" style="font-size: 3rem; color: #CBD5E1; margin-bottom: 12px;"></i>
+            <h4 style="color: var(--primary-navy); margin-bottom: 6px;">No Analyses Performed Yet</h4>
+            <p style="font-size: 0.92rem; max-width: 440px; margin: 0 auto 20px auto;">
+                Upload a chest radiograph or choose one of our demonstration samples to receive instant Vision Transformer classification and XAI heatmaps.
+            </p>
+            <a href="{{ url_for('patient.upload_page') }}" class="btn btn-teal">
+                <i class="fas fa-cloud-upload-alt"></i> Start Image Analysis
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

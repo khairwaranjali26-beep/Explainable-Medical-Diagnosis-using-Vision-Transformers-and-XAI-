@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}Diagnosis Results – {{ analysis.report_id }} – MediLens AI{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 24px;">
+    <!-- Top Action Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                <span class="badge-role" style="background: var(--card-light-blue); color: var(--primary-navy); border: 1px solid var(--card-light-blue-border);">
+                    Report ID: {{ analysis.report_id }}
+                </span>
+                <span style="font-size: 0.82rem; color: var(--text-muted);">
+                    <i class="far fa-calendar-alt"></i> {{ analysis.created_at|datetime_format }}
+                </span>
+            </div>
+            <h1 style="font-size: 1.85rem; color: var(--primary-navy);">Explainable Diagnostic Findings</h1>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="{{ url_for('patient.explanation_page', report_id=analysis.report_id) }}" class="btn btn-outline" style="background: #fff;">
+                <i class="fas fa-layer-group" style="color: var(--secondary-teal);"></i> Interactive XAI Breakdown
+            </a>
+            <a href="{{ url_for('patient.download_pdf', report_id=analysis.report_id) }}" class="btn btn-primary">
+                <i class="fas fa-file-pdf"></i> Download Official PDF Report
+            </a>
+            <button type="button" class="btn btn-teal" onclick="openModal('shareModal')">
+                <i class="fas fa-share-alt"></i> Share with Doctor
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Results Grid -->
+    <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 28px; margin-bottom: 32px;">
+        
+        <!-- Left Column: Interactive Image Viewer & Opacity Slider -->
+        <div class="card" style="padding: 24px;">
+            <div class="card-header" style="margin-bottom: 16px;">
+                <div class="card-title" style="font-size: 1.1rem;">
+                    <i class="fas fa-microscope" style="color: var(--secondary-teal);"></i> Vision Transformer Heatmap Viewer
+                </div>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Interactive Alpha Blending</span>
+            </div>
+
+            <div class="viewer-container">
+                <!-- Base Greyscale Radiograph -->
+                <img src="{{ url_for('static', filename=analysis.original_image_path) }}" alt="Base Radiograph" class="viewer-base-img" id="interactiveBaseImg">
+                <!-- Overlaid Attention Heatmap -->
+                <img src="{{ url_for('static', filename=analysis.heatmap_path) }}" alt="XAI Heatmap" class="viewer-overlay-img" id="interactiveOverlayImg" style="opacity: 0.52;">
+            </div>
+
+            <!-- Heatmap Opacity Control -->
+            <div style="margin-top: 18px; background: #F8FAFC; padding: 14px 18px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label for="heatmapOpacitySlider" style="font-weight: 600; font-size: 0.88rem; color: var(--primary-navy); display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-adjust" style="color: var(--secondary-teal);"></i> Heatmap Overlay Opacity:
+                    </label>
+                    <span id="opacityValueLabel" style="font-weight: 700; color: var(--secondary-teal); font-size: 0.92rem;">52%</span>
+                </div>
+                <input type="range" id="heatmapOpacitySlider" min="0" max="100" value="52" class="slider-ctrl">
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                    <span>0% (Raw X-Ray)</span>
+                    <span>50% (Balanced Fusion)</span>
+                    <span>100% (Full Attention Map)</span>
+                </div>
+            </div>
+
+            <!-- Colormap Key -->
+            <div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted);">
+                <span>Low Model Activation</span>
+                <div style="flex: 1; height: 10px; margin: 0 12px; border-radius: 5px; background: linear-gradient(to right, #000080, #00ffff, #00ff00, #ffff00, #ff0000);"></div>
+                <span>High Attention Hotspot</span>
+            </div>
+        </div>
+
+        <!-- Right Column: Diagnostic Verdict & Metrics -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- Primary Classification Banner -->
+            <div class="card" style="padding: 24px; {% if analysis.predicted_class == 'Pneumonia' %}background: #FEF2F2; border: 1px solid #FECACA;{% else %}background: #F0FDF4; border: 1px solid #BBF7D0;{% endif %}">
+                <div style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; {% if analysis.predicted_class == 'Pneumonia' %}color: #B91C1C;{% else %}color: #15803D;{% endif %}">
+                    Vision Transformer Primary Classification
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        {% if analysis.predicted_class == 'Pneumonia' %}
+                        <div style="width: 46px; height: 46px; border-radius: 50%; background: #FEE2E2; color: #DC2626; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <h2 style="color: #991B1B; font-size: 1.6rem; line-height: 1.1;">Pneumonia Detected</h2>
+                            <span style="font-size: 0.85rem; color: #B91C1C;">Focal parenchymal consolidation identified</span>
+                        </div>
+                        {% else %}
+                        <div style="width: 46px; height: 46px; border-radius: 50%; background: #DCFCE7; color: #16A34A; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <h2 style="color: #14532D; font-size: 1.6rem; line-height: 1.1;">Normal (Clear Lungs)</h2>
+                            <span style="font-size: 0.85rem; color: #15803D;">No acute airspace consolidation identified</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary-navy); line-height: 1;">{{ analysis.confidence }}%</div>
+                        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Prediction Confidence</span>
+                    </div>
+                </div>
+
+                <!-- Probability Distribution Bars -->
+                <div style="background: rgba(255,255,255,0.7); padding: 12px; border-radius: 8px; margin-top: 10px;">
+                    <div style="margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 3px;">
+                            <span>Pneumonia Probability:</span>
+                            <strong>{{ analysis.pneumonia_prob }}%</strong>
+                        </div>
+                        <div style="height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden;">
+                            <div style="width: {{ analysis.pneumonia_prob }}%; height: 100%; background: #EF4444;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 3px;">
+                            <span>Normal Probability:</span>
+                            <strong>{{ analysis.normal_prob }}%</strong>
+                        </div>
+                        <div style="height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden;">
+                            <div style="width: {{ analysis.normal_prob }}%; height: 100%; background: #10B981;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Radiological & XAI Findings Summary -->
+            <div class="card" style="padding: 22px;">
+                <div class="card-title" style="font-size: 1.05rem; margin-bottom: 12px;">
+                    <i class="fas fa-clipboard-list" style="color: var(--secondary-teal);"></i> Radiologic & Attention Localization
+                </div>
+                <div style="background: var(--card-light-blue); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--card-light-blue-border); margin-bottom: 14px; font-size: 0.88rem;">
+                    <strong>Localized Region:</strong> {{ analysis.affected_regions }}
+                </div>
+                <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">
+                    {{ analysis.findings_summary }}
+                </p>
+                <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+                    <span><i class="fas fa-microchip"></i> ViT-B/16 Custom Model</span>
+                    <span><i class="fas fa-eye"></i> Recursive Attention Rollout</span>
+                </div>
+            </div>
+
+            <!-- Doctor Verification Card -->
+            <div class="card" style="padding: 22px;">
+                <div class="card-title" style="font-size: 1.05rem; margin-bottom: 12px;">
+                    <i class="fas fa-user-md" style="color: var(--secondary-teal);"></i> Clinical Doctor Verification
+                </div>
+
+                {% if doctor_review %}
+                <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 14px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <strong style="color: #166534; font-size: 0.92rem;">
+                            <i class="fas fa-check-circle"></i> Verified by {{ doctor_review.doctor_name }}
+                        </strong>
+                        <span style="font-size: 0.78rem; color: #15803D;">{{ doctor_review.reviewed_at|datetime_format }}</span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">
+                        Specialty: {{ doctor_review.doctor_specialty }}
+                    </div>
+                    <div style="font-size: 0.88rem; color: #0F172A; margin-bottom: 6px;">
+                        <strong>Physician Verdict:</strong> {{ doctor_review.clinical_verdict }}
+                    </div>
+                    <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 6px;">
+                        <strong>Clinical Observations:</strong> {{ doctor_review.clinical_notes }}
+                    </div>
+                    {% if doctor_review.recommendations %}
+                    <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5;">
+                        <strong>Prescribed Plan:</strong> {{ doctor_review.recommendations }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% elif share_record %}
+                <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 14px; text-align: center;">
+                    <i class="fas fa-hourglass-half" style="font-size: 1.8rem; color: #D97706; margin-bottom: 8px;"></i>
+                    <h4 style="color: #92400E; font-size: 0.95rem; margin-bottom: 4px;">Shared with {{ share_record.doctor_name }}</h4>
+                    <p style="font-size: 0.85rem; color: #B45309;">
+                        Your scan was securely transmitted for review on {{ share_record.shared_at|datetime_format }}. You will receive a notification as soon as the physician completes evaluation.
+                    </p>
+                </div>
+                {% else %}
+                <div style="background: #F8FAFC; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 16px; text-align: center;">
+                    <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 12px;">
+                        This scan has not yet been reviewed by a qualified doctor. Share this report securely with an attending physician for clinical sign-off.
+                    </p>
+                    <button type="button" class="btn btn-teal btn-sm" onclick="openModal('shareModal')">
+                        <i class="fas fa-share-alt"></i> Share with Licensed Doctor
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share with Doctor Modal -->
+<div class="modal-overlay" id="shareModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 style="font-size: 1.15rem; color: var(--primary-navy);"><i class="fas fa-share-alt" style="color: var(--secondary-teal);"></i> Securely Share with Physician</h3>
+            <button type="button" onclick="closeModal('shareModal')" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+        </div>
+        <form action="{{ url_for('patient.share_report', report_id=analysis.report_id) }}" method="POST">
+            <div class="modal-body">
+                <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 16px;">
+                    Select an attending physician or radiologist to grant them access to this chest X-ray and its Vision Transformer attention heatmap.
+                </p>
+                <div class="form-group">
+                    <label class="form-label" for="doctor_id"><i class="fas fa-user-md"></i> Select Physician</label>
+                    <select name="doctor_id" id="doctor_id" class="form-control" required>
+                        <option value="">-- Choose a Licensed Doctor --</option>
+                        {% for d in doctors %}
+                        <option value="{{ d.id }}" {% if share_record and share_record.doctor_id == d.id %}selected{% endif %}>
+                            {{ d.name }} – {{ d.specialty }} (License: {{ d.license_no }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="patient_notes"><i class="fas fa-comment-medical"></i> Symptoms & Patient Notes for the Doctor</label>
+                    <textarea name="patient_notes" id="patient_notes" rows="3" class="form-control" placeholder="Describe symptoms (e.g. fever, cough, chest tightness, duration)...">{{ share_record.patient_notes if share_record else '' }}</textarea>
+                </div>
+
+                <div style="font-size: 0.78rem; color: var(--text-muted); background: #F1F5F9; padding: 10px; border-radius: 6px;">
+                    <i class="fas fa-shield-alt" style="color: var(--secondary-teal);"></i> HIPAA / Confidentiality: Only the selected doctor will have cryptographic authorization to view this medical record.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('shareModal')">Cancel</button>
+                <button type="submit" class="btn btn-teal btn-sm"><i class="fas fa-paper-plane"></i> Share Report</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

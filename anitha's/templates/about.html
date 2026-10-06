@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}About MediLens AI – B.Tech CSE (AI & ML) Capstone Project{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 30px auto;">
+    <div style="text-align: center; margin-bottom: 36px;">
+        <span class="hero-pill"><i class="fas fa-graduation-cap"></i> Academic Project Documentation</span>
+        <h1 style="font-size: 2.2rem; color: var(--primary-navy); margin-bottom: 8px;">
+            MediLens AI: Explainable Medical Diagnosis using Vision Transformers & XAI
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 1rem;">
+            Department of Computer Science & Engineering (Artificial Intelligence & Machine Learning)
+        </p>
+    </div>
+
+    <div class="card" style="padding: 32px; margin-bottom: 28px;">
+        <h3 style="font-size: 1.3rem; margin-bottom: 12px; color: var(--primary-navy);"><i class="fas fa-bullseye" style="color: var(--secondary-teal);"></i> Project Problem Statement & Motivation</h3>
+        <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 16px;">
+            While deep convolutional neural networks (CNNs) have shown impressive diagnostic classification accuracy in chest radiography, their "black-box" nature presents a severe obstacle for clinical adoption. Radiologists and patients need to understand <em>why</em> a model arrives at a specific verdict. Furthermore, CNNs are inherently constrained by local kernel receptive fields, making it difficult to capture subtle global parenchymal asymmetries across bilateral lungs.
+        </p>
+        <p style="color: var(--text-secondary); line-height: 1.7;">
+            <strong>MediLens AI</strong> addresses these limitations by introducing a Vision Transformer (ViT-B/16) pipeline equipped with Self-Attention Rollout. By tokenizing the radiograph into 196 non-overlapping patches ($16 \times 16$ pixels), the model computes self-attention between every pair of patches across 6 transformer encoder layers. The attention rollout formulation subsequently reconstructs spatial activation heatmaps, providing verifiable radiologic explanations.
+        </p>
+    </div>
+
+    <div class="card" style="padding: 32px; margin-bottom: 28px;">
+        <h3 style="font-size: 1.3rem; margin-bottom: 12px; color: var(--primary-navy);"><i class="fas fa-cogs" style="color: var(--secondary-teal);"></i> System Architecture Modules</h3>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 14px; color: var(--text-secondary); font-size: 0.95rem;">
+            <li style="display: flex; gap: 12px;">
+                <div style="color: var(--secondary-teal); font-size: 1.2rem;"><i class="fas fa-layer-group"></i></div>
+                <div><strong>Frontend Presentation Module:</strong> Responsive healthcare UI crafted with HTML5, CSS3 variables, JavaScript (ES6+), FontAwesome 6, and Chart.js for interactive evaluation graphs.</div>
+            </li>
+            <li style="display: flex; gap: 12px;">
+                <div style="color: var(--secondary-teal); font-size: 1.2rem;"><i class="fab fa-python"></i></div>
+                <div><strong>Backend REST & Web Module:</strong> Python Flask application factory handling role-based authentication, image validation, session management, and REST APIs.</div>
+            </li>
+            <li style="display: flex; gap: 12px;">
+                <div style="color: var(--secondary-teal); font-size: 1.2rem;"><i class="fas fa-brain"></i></div>
+                <div><strong>AI & XAI Inference Engine:</strong> PyTorch Vision Transformer architecture with PatchEmbedding, Multi-Head Self-Attention, and recursive Attention Rollout generating Jet heatmaps.</div>
+            </li>
+            <li style="display: flex; gap: 12px;">
+                <div style="color: var(--secondary-teal); font-size: 1.2rem;"><i class="fas fa-database"></i></div>
+                <div><strong>Database & Audit Module:</strong> MySQL / SQLite persistence layer storing patient accounts, analysis records, doctor consultations, and security logs.</div>
+            </li>
+            <li style="display: flex; gap: 12px;">
+                <div style="color: var(--secondary-teal); font-size: 1.2rem;"><i class="fas fa-file-pdf"></i></div>
+                <div><strong>Clinical Report Generation Module:</strong> ReportLab PDF rendering engine creating clinical diagnostic summaries with embedded radiographs, confidence metrics, and doctor sign-off.</div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="card card-light-blue" style="padding: 24px;">
+        <div style="font-weight: 700; color: var(--primary-navy); font-size: 1.05rem; margin-bottom: 8px;">
+            <i class="fas fa-book" style="color: var(--secondary-teal);"></i> Academic Literature & References
+        </div>
+        <ol style="margin-left: 20px; font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6;">
+            <li>Dosovitskiy, A., et al. (2020). <em>An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale.</em> ICLR 2021.</li>
+            <li>Abnar, S., & Zuidema, W. (2020). <em>Quantifying Attention Flow in Transformers.</em> ACL 2020.</li>
+            <li>Wang, X., et al. (2017). <em>ChestX-ray8: Hospital-scale Chest X-ray Database and Benchmarks.</em> IEEE CVPR 2017.</li>
+        </ol>
+    </div>
+</div>
+{% endblock %}

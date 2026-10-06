@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Internal Server Error (500) – MediLens AI{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 540px; margin: 80px auto; text-align: center;">
+    <div style="font-size: 5rem; font-weight: 800; color: #FECACA; line-height: 1;">500</div>
+    <h2 style="font-size: 1.8rem; color: #DC2626; margin: 16px 0 10px 0;">Internal System Error</h2>
+    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 24px;">
+        An unexpected error occurred during processing. The system administrator has been logged regarding this event.
+    </p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">
+        <i class="fas fa-home"></i> Return to Homepage
+    </a>
+</div>
+{% endblock %}

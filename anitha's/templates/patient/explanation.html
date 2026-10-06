@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Explainable AI Deep-Dive – {{ analysis.report_id }} – MediLens AI{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 24px;">
+    <!-- Breadcrumb & Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+        <div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">
+                <a href="{{ url_for('patient.results_page', report_id=analysis.report_id) }}"><i class="fas fa-arrow-left"></i> Back to Report {{ analysis.report_id }}</a>
+            </div>
+            <h1 style="font-size: 1.85rem; color: var(--primary-navy);">Explainable AI (XAI) Radiologic Interpretation</h1>
+        </div>
+        <div>
+            <a href="{{ url_for('patient.download_pdf', report_id=analysis.report_id) }}" class="btn btn-outline" style="background: #fff;">
+                <i class="fas fa-file-pdf" style="color: #DC2626;"></i> Export PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- 4-Panel Side-by-Side Comparative Grid -->
+    <div class="card" style="padding: 24px; margin-bottom: 32px;">
+        <div class="card-header" style="margin-bottom: 16px;">
+            <div class="card-title">
+                <i class="fas fa-columns" style="color: var(--secondary-teal);"></i> 4-Stage Visual Decomposition Pipeline
+            </div>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">From Raw Pixels to Self-Attention Rollout</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; text-align: center;">
+            <!-- Stage 1: Original X-Ray -->
+            <div style="background: #F8FAFC; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="font-weight: 700; font-size: 0.9rem; color: var(--primary-navy); margin-bottom: 8px;">
+                    1. Original Chest Radiograph
+                </div>
+                <img src="{{ url_for('static', filename=analysis.original_image_path) }}" alt="Original Radiograph" style="width: 100%; height: 210px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 8px;">
+                    Standard PA digital projection (224x224 normalized).
+                </div>
+            </div>
+
+            <!-- Stage 2: Patch Grid (14x14) -->
+            <div style="background: #F8FAFC; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="font-weight: 700; font-size: 0.9rem; color: var(--primary-navy); margin-bottom: 8px;">
+                    2. ViT 14x14 Patch Grid
+                </div>
+                <img src="{{ url_for('static', filename=analysis.patch_grid_path) }}" alt="Patch Grid" style="width: 100%; height: 210px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 8px;">
+                    196 tokens of 16x16 px. Red boxes show top attention patches.
+                </div>
+            </div>
+
+            <!-- Stage 3: XAI Jet Heatmap -->
+            <div style="background: #F8FAFC; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="font-weight: 700; font-size: 0.9rem; color: var(--primary-navy); margin-bottom: 8px;">
+                    3. Attention Rollout Heatmap
+                </div>
+                <img src="{{ url_for('static', filename=analysis.heatmap_path) }}" alt="Attention Heatmap" style="width: 100%; height: 210px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 8px;">
+                    Recursive self-attention propagation from [CLS] token.
+                </div>
+            </div>
+
+            <!-- Stage 4: Anatomical Overlay -->
+            <div style="background: #F8FAFC; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="font-weight: 700; font-size: 0.9rem; color: var(--primary-navy); margin-bottom: 8px;">
+                    4. Fused Clinical Overlay
+                </div>
+                <img src="{{ url_for('static', filename=analysis.overlay_path) }}" alt="Overlay" style="width: 100%; height: 210px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 8px;">
+                    50% greyscale radiograph + 50% attention blend.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Educational Guide & Interpretation Sections -->
+    <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 28px; margin-bottom: 32px;">
+        
+        <!-- How to Interpret Heatmaps Guide -->
+        <div class="card" style="padding: 24px;">
+            <div class="card-title" style="font-size: 1.15rem; margin-bottom: 16px;">
+                <i class="fas fa-info-circle" style="color: var(--secondary-teal);"></i> How to Interpret Attention Heatmaps
+            </div>
+
+            <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px;">
+                Explainable AI maps neural network feature weights back to spatial coordinates on the chest radiograph. This reveals exactly which anatomical zones guided the Vision Transformer to its conclusion:
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                <div style="display: flex; gap: 14px; align-items: flex-start; padding: 10px 14px; background: #FEF2F2; border-left: 4px solid #EF4444; border-radius: 4px;">
+                    <div style="font-weight: 800; color: #DC2626; min-width: 90px; font-size: 0.88rem;">Red / Amber:</div>
+                    <div style="font-size: 0.86rem; color: #7F1D1D;">
+                        <strong>Primary Diagnostic Focus (Weight &ge; 0.80):</strong> Indicates areas where the model identified pathological tissue alterations, such as alveolar airspace opacification, fluid accumulation, or lobar consolidation characteristic of pneumonia.
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 14px; align-items: flex-start; padding: 10px 14px; background: #FFFBEB; border-left: 4px solid #F59E0B; border-radius: 4px;">
+                    <div style="font-weight: 800; color: #D97706; min-width: 90px; font-size: 0.88rem;">Green / Yellow:</div>
+                    <div style="font-size: 0.86rem; color: #78350F;">
+                        <strong>Secondary Contextual Focus (Weight 0.45 - 0.75):</strong> Encompasses supporting anatomical landmarks such as the cardiophrenic angles, vascular markings, and perihilar margins that the model evaluates to assess lung inflation symmetry.
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 14px; align-items: flex-start; padding: 10px 14px; background: #F0F9FF; border-left: 4px solid #0EA5E9; border-radius: 4px;">
+                    <div style="font-weight: 800; color: #0284C7; min-width: 90px; font-size: 0.88rem;">Blue / Indigo:</div>
+                    <div style="font-size: 0.86rem; color: #0C4A6E;">
+                        <strong>Baseline Activation (Weight &le; 0.35):</strong> Normal, aerated lung parenchyma or non-pulmonary background tissue (soft tissue cage, mediastinum, subdiaphragmatic space) with no acute radiographic abnormalities.
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: var(--card-light-blue); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--card-light-blue-border); font-size: 0.88rem;">
+                <strong>Clinical Takeaway for {{ analysis.report_id }}:</strong>
+                <p style="margin-top: 4px; color: var(--text-secondary);">
+                    {{ analysis.findings_summary }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Vision Transformer Math & Architecture -->
+        <div class="card" style="padding: 24px;">
+            <div class="card-title" style="font-size: 1.15rem; margin-bottom: 16px;">
+                <i class="fas fa-brain" style="color: var(--secondary-teal);"></i> Transformer Math & Architecture
+            </div>
+
+            <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">
+                <div style="margin-bottom: 14px;">
+                    <strong style="color: var(--primary-navy);">1. Patch Embedding:</strong><br>
+                    An input image $x \in \mathbb{R}^{224 \times 224 \times 3}$ is partitioned into $N = 196$ flattened patches of size $P \times P = 16 \times 16$. Each patch is linearly projected into dimension $D = 192$.
+                </div>
+
+                <div style="margin-bottom: 14px;">
+                    <strong style="color: var(--primary-navy);">2. [CLS] Token & 1D Positional Encodings:</strong><br>
+                    A learnable classification token $z_0^0 = x_{\text{class}}$ is prepended to the sequence, and 1D positional embeddings $E_{\text{pos}} \in \mathbb{R}^{(N+1) \times D}$ are added to retain spatial coordinates.
+                </div>
+
+                <div style="margin-bottom: 14px;">
+                    <strong style="color: var(--primary-navy);">3. Multi-Head Self-Attention (MHSA):</strong><br>
+                    Each block calculates Query ($Q$), Key ($K$), and Value ($V$) projections:
+                    <div style="background: #F8FAFC; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; margin: 6px 0; border: 1px solid var(--border-subtle); text-align: center;">
+                        Attention(Q, K, V) = Softmax(Q·K^T / √d_k) · V
+                    </div>
+                </div>
+
+                <div>
+                    <strong style="color: var(--primary-navy);">4. Attention Rollout Formulation:</strong><br>
+                    To track global token flow across all $L$ layers, we compute recursive matrix multiplication:
+                    <div style="background: #F8FAFC; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; margin: 6px 0; border: 1px solid var(--border-subtle); text-align: center;">
+                        A_rollout = ∏ [0.5 · A_layer + 0.5 · Identity]
+                    </div>
+                    Taking row 0 yields the [CLS] token's exact attention weights for all 196 image patches.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

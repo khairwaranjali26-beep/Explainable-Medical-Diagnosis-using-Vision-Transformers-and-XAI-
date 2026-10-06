@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block title %}MediLens AI – Explainable Medical Diagnosis using Vision Transformers & XAI{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container hero-grid">
+        <div>
+            <div class="hero-pill">
+                <i class="fas fa-award"></i> B.Tech CSE (AI & ML) Capstone Engineering Project
+            </div>
+            <h1 class="hero-title">
+                Explainable Medical Diagnosis using <span class="gradient-text">Vision Transformers</span> & XAI
+            </h1>
+            <p class="hero-lead">
+                MediLens AI transforms black-box deep learning into interpretable clinical insights. By dividing chest radiographs into spatial patches and computing self-attention rollout heatmaps, we empower patients and physicians with transparent, evidence-based pulmonary analysis.
+            </p>
+            <div class="hero-cta">
+                {% if current_user %}
+                    {% if current_user.role == 'patient' %}
+                        <a href="{{ url_for('patient.upload_page') }}" class="btn btn-teal btn-lg">
+                            <i class="fas fa-cloud-upload-alt"></i> Upload & Analyze X-Ray
+                        </a>
+                        <a href="{{ url_for('patient.dashboard') }}" class="btn btn-outline btn-lg">
+                            <i class="fas fa-th-large"></i> Go to Dashboard
+                        </a>
+                    {% elif current_user.role == 'doctor' %}
+                        <a href="{{ url_for('doctor.dashboard') }}" class="btn btn-teal btn-lg">
+                            <i class="fas fa-user-md"></i> Open Clinical Workstation
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-teal btn-lg">
+                            <i class="fas fa-shield-alt"></i> Open Admin Console
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-teal btn-lg">
+                        <i class="fas fa-play-circle"></i> Get Started / Demo Login
+                    </a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline btn-lg">
+                        <i class="fas fa-user-plus"></i> Patient Registration
+                    </a>
+                {% endif %}
+            </div>
+            
+            <!-- Quick Demo Credentials Box -->
+            <div style="margin-top: 24px; padding: 12px 16px; background: #FFFFFF; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); display: inline-flex; align-items: center; gap: 14px; font-size: 0.85rem; box-shadow: var(--shadow-sm);">
+                <span style="font-weight: 700; color: var(--primary-navy);"><i class="fas fa-key" style="color: var(--secondary-teal);"></i> Viva Quick Logins:</span>
+                <span style="color: var(--text-muted);">Admin (admin@medilens.ai)</span>
+                <span>•</span>
+                <span style="color: var(--text-muted);">Doctor (dr.sharma@medilens.ai)</span>
+                <span>•</span>
+                <span style="color: var(--text-muted);">Patient (patient@medilens.ai)</span>
+            </div>
+        </div>
+
+        <!-- Right Side Preview Card -->
+        <div class="hero-preview-card">
+            <div class="hero-badge-float">
+                <i class="fas fa-check-circle"></i> ViT-B/16 Active
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">
+                Demonstration Case: Pneumonia Localization
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <div style="text-align: center;">
+                    <img src="{{ url_for('static', filename='sample_images/sample_pneumonia_chest_xray.jpg') }}" alt="Original X-ray" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                    <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">PA Chest Radiograph</span>
+                </div>
+                <div style="text-align: center;">
+                    <img src="{{ url_for('static', filename='uploads/ML-2026-8491_overlay.png') }}" alt="XAI Heatmap Overlay" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                    <span style="font-size: 0.78rem; color: #0D9488; font-weight: 600;">Attention Rollout Heatmap</span>
+                </div>
+            </div>
+            <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 12px; font-size: 0.86rem; color: #166534;">
+                <div style="font-weight: 700; display: flex; justify-content: space-between;">
+                    <span>AI Diagnosis: Pneumonia</span>
+                    <span>Confidence: 94.6%</span>
+                </div>
+                <div style="font-size: 0.8rem; color: #15803D; margin-top: 4px;">
+                    Focal consolidation localized in Right Lower/Middle Lobe. Clinically verified by Dr. Rajesh Sharma.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Key Stats Bar -->
+<section style="background: #FFFFFF; border-bottom: 1px solid var(--border-subtle); padding: 30px 0;">
+    <div class="container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center;">
+        <div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary-navy);">{{ stats.accuracy }}</div>
+            <div style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">Classification Accuracy</div>
+        </div>
+        <div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: var(--secondary-teal);">{{ stats.f1_score }}</div>
+            <div style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">F1-Score (Balanced)</div>
+        </div>
+        <div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: var(--accent-cyan);">{{ stats.auc_roc }}</div>
+            <div style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">AUC-ROC Metric</div>
+        </div>
+        <div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary-navy);">196 Patches</div>
+            <div style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">14x14 ViT Resolution</div>
+        </div>
+    </div>
+</section>
+
+<!-- Project Objectives & Features Section -->
+<section id="features" class="section">
+    <div class="container">
+        <div class="section-title-wrap">
+            <div class="section-subtitle">Core Objectives & Capabilities</div>
+            <h2 class="section-title">Bridging Clinical Trust with Explainable AI</h2>
+            <p class="section-desc">
+                MediLens AI provides a patient-facing medical image analysis support system that overcomes traditional black-box opacity through self-attention visualization.
+            </p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-box">
+                <div class="feature-icon-wrap">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h3 style="font-size: 1.2rem; margin-bottom: 10px;">Vision Transformer (ViT)</h3>
+                <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">
+                    Unlike legacy CNNs restricted to local receptive fields, ViT treats image patches as visual words and models long-range anatomical dependencies across the entire lung parenchyma simultaneously.
+                </p>
+            </div>
+
+            <div class="feature-box">
+                <div class="feature-icon-wrap">
+                    <i class="fas fa-fire-alt"></i>
+                </div>
+                <h3 style="font-size: 1.2rem; margin-bottom: 10px;">Attention Rollout (XAI)</h3>
+                <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">
+                    Recursive self-attention propagation computes exact token influence from the [CLS] classification token back to each 16x16 patch, generating high-fidelity Jet heatmaps of pathological consolidations.
+                </p>
+            </div>
+
+            <div class="feature-box">
+                <div class="feature-icon-wrap">
+                    <i class="fas fa-sliders-h"></i>
+                </div>
+                <h3 style="font-size: 1.2rem; margin-bottom: 10px;">Interactive Opacity Slider</h3>
+                <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">
+                    Allows patients and radiologists to cross-fade seamlessly between the raw radiographic greyscale image and the AI attention overlay, verifying exact anatomical correlation.
+                </p>
+            </div>
+
+            <div class="feature-box">
+                <div class="feature-icon-wrap">
+                    <i class="fas fa-file-medical-alt"></i>
+                </div>
+                <h3 style="font-size: 1.2rem; margin-bottom: 10px;">Clinical PDF Reporting</h3>
+                <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">
+                    Generates institutional-quality diagnostic PDF reports including patient demographics, side-by-side radiograph comparisons, confidence breakdowns, and physician verification blocks.
+                </p>
+            </div>
+
+            <div class="feature-box">
+                <div class="feature-icon-wrap">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h3 style="font-size: 1.2rem; margin-bottom: 10px;">Role-Based Security</h3>
+                <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">
+                    Secure authentication with password hashing and role-based permissions ensuring doctors can only access records explicitly shared with them by consenting patients.
+                </p>
+            </div>
+
+            <div class="feature-box">
+                <div class="feature-icon-wrap">
+                    <i class="fas fa-stethoscope"></i>
+                </div>
+                <h3 style="font-size: 1.2rem; margin-bottom: 10px;">Doctor Verification Loop</h3>
+                <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">
+                    Empowers licensed clinicians to inspect original scans and AI explanations side by side, append clinical observation notes, formulate treatment plans, and mark reports as verified.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section id="how-it-works" class="section" style="background: var(--card-light-blue); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle);">
+    <div class="container">
+        <div class="section-title-wrap">
+            <div class="section-subtitle">Diagnostic Workflow</div>
+            <h2 class="section-title">How MediLens AI Operates</h2>
+            <p class="section-desc">
+                Four clear steps from radiographic ingestion to explainable physician collaboration.
+            </p>
+        </div>
+
+        <div class="steps-row">
+            <div class="step-card">
+                <div class="step-num">1</div>
+                <h4 style="margin-bottom: 10px; font-size: 1.1rem;">Chest X-Ray Upload</h4>
+                <p style="font-size: 0.88rem; color: var(--text-secondary);">
+                    Drag-and-drop digital PA chest radiographs in JPG or PNG format. Automatic validation ensures format and resolution standards.
+                </p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-num">2</div>
+                <h4 style="margin-bottom: 10px; font-size: 1.1rem;">Patch Embedding & ViT</h4>
+                <p style="font-size: 0.88rem; color: var(--text-secondary);">
+                    Image is divided into 196 non-overlapping (16x16) patches, projected into high-dimensional embeddings, and processed by multi-head self-attention.
+                </p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-num">3</div>
+                <h4 style="margin-bottom: 10px; font-size: 1.1rem;">XAI Heatmap Rollout</h4>
+                <p style="font-size: 0.88rem; color: var(--text-secondary);">
+                    Recursive attention rollout traces token relationships across layers to generate a JET colormap heatmap showing pathological attention hotspots.
+                </p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-num">4</div>
+                <h4 style="margin-bottom: 10px; font-size: 1.1rem;">Clinical Review & PDF</h4>
+                <p style="font-size: 0.88rem; color: var(--text-secondary);">
+                    Patients can review findings, export official PDF reports, or securely share the case with their doctor for professional clinical diagnosis.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ViT vs Traditional CNN Comparison Table -->
+<section id="technology" class="section">
+    <div class="container">
+        <div class="section-title-wrap">
+            <div class="section-subtitle">Architectural Comparison</div>
+            <h2 class="section-title">Vision Transformers vs Conventional CNNs</h2>
+            <p class="section-desc">
+                Why Vision Transformers provide superior global context and transparent explainability for pulmonary diagnostics.
+            </p>
+        </div>
+
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Feature / Metric</th>
+                            <th style="width: 37.5%; color: var(--primary-navy); font-weight: 700;">Traditional CNN (ResNet / DenseNet)</th>
+                            <th style="width: 37.5%; color: var(--secondary-teal); font-weight: 700;">Vision Transformer (ViT-B/16) in MediLens</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Receptive Field</strong></td>
+                            <td>Local kernel-based; requires deep stacking to capture distant lung cues</td>
+                            <td><strong style="color: var(--secondary-teal);">Global from Layer 1;</strong> self-attention compares all lung patches simultaneously</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Inductive Bias</strong></td>
+                            <td>Translation invariance and locality assumed strictly</td>
+                            <td><strong style="color: var(--secondary-teal);">Data-driven attention;</strong> learns flexible bilateral anatomical patterns</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Explainability Method</strong></td>
+                            <td>Grad-CAM (gradient coarse maps prone to blurriness and gradient vanishing)</td>
+                            <td><strong style="color: var(--secondary-teal);">Self-Attention Rollout;</strong> direct mathematical tracking of token-to-token attention weights</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Localization Precision</strong></td>
+                            <td>Coarse feature map upsampling ($7 \times 7 \rightarrow 224 \times 224$)</td>
+                            <td><strong style="color: var(--secondary-teal);">Precise 16x16 patch resolution;</strong> highlights specific lobes and consolidations</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Classification Accuracy</strong></td>
+                            <td>~91.5% on NIH Chest Radiographs</td>
+                            <td><strong style="color: var(--secondary-teal);">96.4% on benchmark testing</strong> with 0.982 AUC-ROC</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Banner -->
+<section style="background: linear-gradient(135deg, var(--primary-navy) 0%, var(--primary-navy-light) 100%); color: #fff; padding: 60px 0; text-align: center;">
+    <div class="container">
+        <h2 style="color: #fff; font-size: 2.2rem; margin-bottom: 16px;">Ready to Explore Explainable Medical AI?</h2>
+        <p style="color: #BAE6FD; font-size: 1.1rem; max-width: 650px; margin: 0 auto 30px auto;">
+            Experience instant chest X-ray classification with Attention Rollout heatmaps, sample radiographic demos, and clinical review workflows.
+        </p>
+        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+            {% if current_user %}
+                <a href="{{ url_for('patient.upload_page') }}" class="btn btn-teal btn-lg">
+                    <i class="fas fa-cloud-upload-alt"></i> Analyze Chest X-Ray Now
+                </a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-teal btn-lg">
+                    <i class="fas fa-sign-in-alt"></i> Test with Preloaded Demo Accounts
+                </a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline btn-lg" style="color: #fff; border-color: rgba(255,255,255,0.4);">
+                    <i class="fas fa-user-plus"></i> Create Patient Account
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

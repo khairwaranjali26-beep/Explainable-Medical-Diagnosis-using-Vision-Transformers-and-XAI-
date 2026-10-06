@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Chest X-Ray – MediLens AI{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 860px; margin: 30px auto;">
+    <div style="text-align: center; margin-bottom: 28px;">
+        <span class="hero-pill">
+            <i class="fas fa-microscope"></i> Vision Transformer Inference & Explainability Engine
+        </span>
+        <h1 style="font-size: 2.2rem; margin-bottom: 8px;">Upload Chest Radiograph for Analysis</h1>
+        <p style="color: var(--text-secondary); font-size: 1rem; max-width: 620px; margin: 0 auto;">
+            Our deep learning model partitions your radiograph into 16x16 pixel patches, computes self-attention rollout, and outputs a confidence score with localized XAI heatmaps.
+        </p>
+    </div>
+
+    <!-- Demonstration Sample Selector Cards -->
+    <div class="card card-light-blue" style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="font-weight: 700; color: var(--primary-navy); font-size: 0.95rem;">
+                <i class="fas fa-flask" style="color: var(--secondary-teal);"></i> Instant Viva Demonstration Samples
+            </div>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Click either sample for 1-click testing:</span>
+        </div>
+
+        <div class="sample-pick-grid">
+            <div class="sample-card" data-sample="sample_normal" data-src="{{ url_for('static', filename='sample_images/sample_normal_chest_xray.jpg') }}" data-label="Normal Chest Radiograph">
+                <img src="{{ url_for('static', filename='sample_images/sample_normal_chest_xray.jpg') }}" alt="Normal Sample" class="sample-img-thumb">
+                <div style="font-weight: 700; color: #059669; font-size: 0.92rem;"><i class="fas fa-check-circle"></i> Sample 1: Normal Chest X-Ray</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Clear bilateral pulmonary fields, no focal consolidation.</div>
+            </div>
+
+            <div class="sample-card" data-sample="sample_pneumonia" data-src="{{ url_for('static', filename='sample_images/sample_pneumonia_chest_xray.jpg') }}" data-label="Pneumonia Chest Radiograph">
+                <img src="{{ url_for('static', filename='sample_images/sample_pneumonia_chest_xray.jpg') }}" alt="Pneumonia Sample" class="sample-img-thumb">
+                <div style="font-weight: 700; color: #DC2626; font-size: 0.92rem;"><i class="fas fa-exclamation-triangle"></i> Sample 2: Pneumonia Chest X-Ray</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Right lower/middle lobe alveolar consolidation with air bronchograms.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Upload Form -->
+    <div class="card" style="padding: 32px;">
+        <form action="{{ url_for('patient.analyze_image') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+            <input type="hidden" name="sample_type" id="selectedSampleType" value="">
+            <input type="file" name="image_file" id="imageFileInput" accept=".jpg,.jpeg,.png" style="display: none;">
+
+            <!-- Drag & Drop Area -->
+            <div class="dropzone" id="uploadDropzone">
+                <div class="dropzone-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <h3 style="font-size: 1.25rem; color: var(--primary-navy); margin-bottom: 6px;">
+                    Drag & Drop Your Chest X-Ray Here
+                </h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 14px;">
+                    or click anywhere in this box to browse from your device
+                </p>
+                <div style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-muted); background: rgba(255,255,255,0.7); padding: 4px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-subtle);">
+                    <i class="fas fa-info-circle"></i> Supported Formats: JPG, PNG • Max Size: 16 MB
+                </div>
+            </div>
+
+            <!-- Preview Card (Hidden initially) -->
+            <div id="uploadPreviewContainer" style="display: none; margin-top: 24px; padding: 16px; background: #F8FAFC; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div style="font-weight: 700; color: var(--primary-navy); font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-image" style="color: var(--secondary-teal);"></i> Selected Scan Preview
+                    </div>
+                    <button type="button" class="btn btn-outline btn-sm" id="clearUploadBtn" style="color: #DC2626; border-color: #FECACA;">
+                        <i class="fas fa-times"></i> Clear Selection
+                    </button>
+                </div>
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <img id="uploadPreviewImg" src="" alt="Preview" style="width: 110px; height: 110px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-medium); box-shadow: var(--shadow-sm);">
+                    <div>
+                        <div id="uploadFileName" style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 4px;"></div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);"><i class="fas fa-check-circle" style="color: #10B981;"></i> Validated & Ready for Vision Transformer Analysis</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div style="margin-top: 28px; text-align: center;">
+                <button type="submit" class="btn btn-teal btn-lg" id="btnSubmitAnalyze" disabled style="min-width: 260px;">
+                    <i class="fas fa-brain"></i> Analyze with Vision Transformer
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Processing Pipeline Progress Modal -->
+    <div class="modal-overlay" id="pipelineModal">
+        <div class="modal-box" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3 style="font-size: 1.15rem; color: var(--primary-navy);"><i class="fas fa-cog fa-spin" style="color: var(--secondary-teal);"></i> Vision Transformer Pipeline</h3>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px;">
+                    Executing deep learning patch embedding and self-attention rollout...
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 14px; font-size: 0.88rem;">
+                    <div id="pipeStep1" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #F8FAFC; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                        <span>1. Standardize Input & Normalize RGB Channels</span>
+                        <span class="step-status"><i class="fas fa-clock" style="color: #94A3B8;"></i> Queued</span>
+                    </div>
+                    <div id="pipeStep2" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #F8FAFC; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                        <span>2. Partition into 196 (16x16) Spatial Patches</span>
+                        <span class="step-status"><i class="fas fa-clock" style="color: #94A3B8;"></i> Queued</span>
+                    </div>
+                    <div id="pipeStep3" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #F8FAFC; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                        <span>3. Inject 1D Positional Encodings & [CLS] Token</span>
+                        <span class="step-status"><i class="fas fa-clock" style="color: #94A3B8;"></i> Queued</span>
+                    </div>
+                    <div id="pipeStep4" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #F8FAFC; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                        <span>4. Multi-Head Self-Attention Transformer Layers</span>
+                        <span class="step-status"><i class="fas fa-clock" style="color: #94A3B8;"></i> Queued</span>
+                    </div>
+                    <div id="pipeStep5" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #F8FAFC; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                        <span>5. Attention Rollout & Jet Heatmap Generation</span>
+                        <span class="step-status"><i class="fas fa-clock" style="color: #94A3B8;"></i> Queued</span>
+                    </div>
+                    <div id="pipeStep6" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #F8FAFC; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                        <span>6. Diagnostic Classification & Report Synthesis</span>
+                        <span class="step-status"><i class="fas fa-clock" style="color: #94A3B8;"></i> Queued</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

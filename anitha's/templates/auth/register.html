@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Register – MediLens AI Healthcare System{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px; margin: 40px auto;">
+    <div class="card" style="box-shadow: var(--shadow-lg); padding: 36px 32px;">
+        <div style="text-align: center; margin-bottom: 28px;">
+            <div class="brand-icon" style="margin: 0 auto 14px auto;">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <h2 style="font-size: 1.8rem; margin-bottom: 6px;">Create Your Account</h2>
+            <p style="color: var(--text-muted); font-size: 0.92rem;">Register for role-based access to Vision Transformer medical diagnostics</p>
+        </div>
+
+        <form action="{{ url_for('auth.register') }}" method="POST" id="regForm">
+            <div class="form-group">
+                <label class="form-label" for="regRole"><i class="fas fa-user-tag"></i> I am registering as a:</label>
+                <select name="role" id="regRole" class="form-control" onchange="toggleDoctorFields()">
+                    <option value="patient" selected>Patient (Analyze Chest X-Rays & View Explanations)</option>
+                    <option value="doctor">Medical Doctor / Radiologist (Clinical Reviewer)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="name"><i class="fas fa-user"></i> Full Name</label>
+                <input type="text" name="name" id="name" class="form-control" placeholder="e.g. Anitha Reddy or Dr. Rajesh Sharma" required>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label" for="gender"><i class="fas fa-venus-mars"></i> Gender</label>
+                    <select name="gender" id="gender" class="form-control">
+                        <option value="Female">Female</option>
+                        <option value="Male">Male</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="age"><i class="fas fa-birthday-cake"></i> Age</label>
+                    <input type="number" name="age" id="age" class="form-control" value="32" min="1" max="120">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="email"><i class="fas fa-envelope"></i> Email Address</label>
+                <input type="email" name="email" id="email" class="form-control" placeholder="name@domain.com" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="phone"><i class="fas fa-phone"></i> Contact Phone</label>
+                <input type="tel" name="phone" id="phone" class="form-control" placeholder="+91 98765 43210">
+            </div>
+
+            <!-- Doctor specific fields (conditionally visible) -->
+            <div id="doctorFields" style="display: none; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: var(--radius-md); padding: 16px; margin-bottom: 18px;">
+                <div style="font-weight: 700; color: #166534; font-size: 0.9rem; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-stethoscope"></i> Medical Professional Credentials
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="specialty">Medical Specialty</label>
+                    <input type="text" name="specialty" id="specialty" class="form-control" placeholder="e.g. MD Pulmonology, DNB Radiodiagnosis">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="license_no">Medical Council Registration / License No.</label>
+                    <input type="text" name="license_no" id="license_no" class="form-control" placeholder="e.g. KMC-10492-P">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label" for="password"><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" name="password" id="password" class="form-control" placeholder="Min 6 characters" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="confirm_password"><i class="fas fa-check-double"></i> Confirm Password</label>
+                    <input type="password" name="confirm_password" id="confirm_password" class="form-control" placeholder="Repeat password" required>
+                </div>
+            </div>
+
+            <div style="margin-top: 24px;">
+                <button type="submit" class="btn btn-teal" style="width: 100%; padding: 12px; font-size: 1rem;">
+                    <i class="fas fa-user-check"></i> Complete Registration
+                </button>
+            </div>
+        </form>
+
+        <div style="text-align: center; margin-top: 24px; font-size: 0.9rem; color: var(--text-muted);">
+            Already have an account? <a href="{{ url_for('auth.login') }}" style="font-weight: 600;">Sign in here</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleDoctorFields() {
+    const role = document.getElementById('regRole').value;
+    const docFields = document.getElementById('doctorFields');
+    if (role === 'doctor') {
+        docFields.style.display = 'block';
+    } else {
+        docFields.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
